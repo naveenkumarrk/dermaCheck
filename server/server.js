@@ -10,7 +10,9 @@ const app = express();
 
 // CORS configuration
 app.use(cors({
-  origin: ['http://localhost:5173', 'https://derma-check-omhp.vercel.app'], // Your Vite client URL
+  origin: ['http://localhost:5173', 'https://derma-check-omhp.vercel.app', 'https://derma-check.vercel.app'], // Your Vite client URL
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
 }));
 

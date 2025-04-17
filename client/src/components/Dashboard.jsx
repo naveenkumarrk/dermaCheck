@@ -292,27 +292,47 @@ const Dashboard = () => {
   
     setFileName(file.name);
     setImagePreview(URL.createObjectURL(file)); // Preview
-    const formData = new FormData();
-    formData.append("file", file);
-  
+    
     setLoading(true);
     setError(null);
     setPrediction(null);
   
     try {
       // Step 1: Upload to FastAPI for prediction
-      const fastapiRes = await axios.post(`${API_URL}/predict`, formData);
+      const predictionFormData = new FormData();
+      predictionFormData.append("file", file);
+      
+      const fastapiRes = await axios.post(`${API_URL}/predict`, predictionFormData);
       setPrediction(fastapiRes.data);
   
-      // Step 2: Upload to Node API to store image info (auth required)
+      // Step 2: Upload to Node API to store image info
+      const nodeApiUrl = import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:5000';
       const token = localStorage.getItem("token"); // or useContext/Auth hook
-      await axios.post(`${import.meta.env.VITE_BACKEND_API_URL}/api/upload`, formData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data'
+      
+      if (token) {
+        // Create a fresh FormData for the Node backend
+        const nodeFormData = new FormData();
+        nodeFormData.append("file", file);
+        
+        try {
+          await axios.post(`${nodeApiUrl}/api/upload`, nodeFormData, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'multipart/form-data'
+            }
+          });
+          console.log("Successfully uploaded to database");
+        } catch (nodeErr) {
+          console.error("Database upload error:", nodeErr);
+          // Optional: Show a warning but don't block the user experience
+          setError("Image analysis successful, but failed to save to your account. Some features may be limited.");
         }
-      });
+      } else {
+        console.warn("No authentication token found for database upload");
+        // Optional: Show a message about logging in to save results
+      }
   
+      // Always show chatbot after successful prediction
       setShowChatbot(true);
     } catch (err) {
       console.error("Upload error:", err);
@@ -321,7 +341,7 @@ const Dashboard = () => {
       setLoading(false);
     }
   };
-
+  
   const handleInputChange = (event) => {
     const file = event.target.files[0];
     if (file) handleFileUpload(file);
