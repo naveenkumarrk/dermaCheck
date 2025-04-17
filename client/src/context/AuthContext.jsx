@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useEffect } from 'react';
 
 const AuthContext = createContext();
 
-const API_URL = import.meta.env.BACKEND_API_URL;
+const API_URL = import.meta.env.VITE_BACKEND_API_URL;
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => {
@@ -63,7 +63,7 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     setLoading(true);
     try {
-      const response = await fetch(`${import.meta.env.BACKEND_API_URL}/api/auth/login`, {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_API_URL}/api/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

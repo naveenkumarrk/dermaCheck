@@ -306,7 +306,7 @@ const Dashboard = () => {
   
       // Step 2: Upload to Node API to store image info (auth required)
       const token = localStorage.getItem("token"); // or useContext/Auth hook
-      await axios.post(`${import.meta.env.BACKEND_API_URL}/api/upload`, formData, {
+      await axios.post(`${import.meta.env.VITE_BACKEND_API_URL}/api/upload`, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data'

@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import { useLocation } from 'react-router-dom';
 
-const API_URL = `${import.meta.env.BACKEND_API_URL}/api`;
+const API_URL = `${import.meta.env.VITE_BACKEND_API_URL}/api`;
 
 const Profile = () => {
   const { user, token } = useAuth();
