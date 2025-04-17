@@ -278,70 +278,80 @@ const Dashboard = () => {
   const [imagePreview, setImagePreview] = useState(null);
   const [showChatbot, setShowChatbot] = useState(false);
 
-  const handleFileUpload = async (file) => {
-    if (!file) return;
+  // In your Dashboard component, update the handleFileUpload function:
+
+const handleFileUpload = async (file) => {
+  if (!file) return;
+
+  const allowedExtensions = ["jpg", "jpeg", "png"];
+  const fileExtension = file.name.split(".").pop().toLowerCase();
+
+  if (!allowedExtensions.includes(fileExtension)) {
+    setError("Please upload a JPG, JPEG, or PNG file");
+    setImagePreview(null);
+    return;
+  }
+
+  setFileName(file.name);
+  setImagePreview(URL.createObjectURL(file)); // Preview
   
-    const allowedExtensions = ["jpg", "jpeg", "png"];
-    const fileExtension = file.name.split(".").pop().toLowerCase();
-  
-    if (!allowedExtensions.includes(fileExtension)) {
-      setError("Please upload a JPG, JPEG, or PNG file");
-      setImagePreview(null);
-      return;
-    }
-  
-    setFileName(file.name);
-    setImagePreview(URL.createObjectURL(file)); // Preview
+  setLoading(true);
+  setError(null);
+  setPrediction(null);
+
+  try {
+    // Step 1: Upload to FastAPI for prediction
+    const predictionFormData = new FormData();
+    predictionFormData.append("file", file);
     
-    setLoading(true);
-    setError(null);
-    setPrediction(null);
-  
+    const fastapiRes = await axios.post(`${API_URL}/predict`, predictionFormData);
+    setPrediction(fastapiRes.data);
+
+    // Step 2: Upload to Node API to store image info
     try {
-      // Step 1: Upload to FastAPI for prediction
-      const predictionFormData = new FormData();
-      predictionFormData.append("file", file);
-      
-      const fastapiRes = await axios.post(`${API_URL}/predict`, predictionFormData);
-      setPrediction(fastapiRes.data);
-  
-      // Step 2: Upload to Node API to store image info
-      const nodeApiUrl = import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:5000';
       const token = localStorage.getItem("token"); // or useContext/Auth hook
       
+      // Create a fresh FormData for the Node backend
+      const nodeFormData = new FormData();
+      nodeFormData.append("file", file);
+      
+      // Get the correct backend URL
+      const nodeApiUrl = import.meta.env.VITE_BACKEND_API_URL;
+      console.log("Uploading to node backend:", nodeApiUrl); // Debug log
+      
       if (token) {
-        // Create a fresh FormData for the Node backend
-        const nodeFormData = new FormData();
-        nodeFormData.append("file", file);
-        
-        try {
-          await axios.post(`${nodeApiUrl}/api/upload`, nodeFormData, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              'Content-Type': 'multipart/form-data'
-            }
-          });
-          console.log("Successfully uploaded to database");
-        } catch (nodeErr) {
-          console.error("Database upload error:", nodeErr);
-          // Optional: Show a warning but don't block the user experience
-          setError("Image analysis successful, but failed to save to your account. Some features may be limited.");
-        }
+        const response = await axios.post(`${nodeApiUrl}/api/upload`, nodeFormData, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data'
+          }
+        });
+        console.log("Database upload response:", response.data); // Debug log
       } else {
         console.warn("No authentication token found for database upload");
-        // Optional: Show a message about logging in to save results
       }
-  
-      // Always show chatbot after successful prediction
-      setShowChatbot(true);
-    } catch (err) {
-      console.error("Upload error:", err);
-      setError("Failed to process image. Please try again.");
-    } finally {
-      setLoading(false);
+    } catch (nodeErr) {
+      console.error("Database upload error:", nodeErr);
+      // More detailed error logging
+      if (nodeErr.response) {
+        console.error("Error response:", nodeErr.response.data);
+        console.error("Error status:", nodeErr.response.status);
+      } else if (nodeErr.request) {
+        console.error("No response received:", nodeErr.request);
+      } else {
+        console.error("Error config:", nodeErr.config);
+      }
     }
-  };
-  
+
+    // Always show chatbot after successful prediction
+    setShowChatbot(true);
+  } catch (err) {
+    console.error("Upload error:", err);
+    setError("Failed to process image. Please try again.");
+  } finally {
+    setLoading(false);
+  }
+};
   const handleInputChange = (event) => {
     const file = event.target.files[0];
     if (file) handleFileUpload(file);
