@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { Upload, MessageCircle, AlertTriangle, ChevronRight, Send, X, Image, RefreshCw, User, Bot } from "lucide-react";
+import DiseaseInformation from "./DiseaseInformation";
 const API_URL = import.meta.env.VITE_API_URL;
 
 const ChatbotInterface = ({ condition }) => {
@@ -528,6 +529,8 @@ const handleFileUpload = async (file) => {
                       </div>
                     </div>
                   </div>
+                  
+                  <DiseaseInformation condition={prediction.class_name} />
                 </div>
               )}
 
